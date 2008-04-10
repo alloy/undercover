@@ -1,0 +1,19 @@
+A GitHub xmlrpc client for http://cia.vc/.
+
+Create a project on the cia.vc site with the name of your github repo.
+Enable the bot and your commits will be send to the specified irc channels.
+
+A "advanced filtering" example I like:
+
+<match path="project">undercover</match>
+<formatter medium="irc">
+  <format appliesTo="CommitToIRC">
+    <b><project/>:</b>
+    <color fg="green"><author/></color>
+    <color fg="orange"><branch/></color>
+    <b>*</b>
+    <revision/>:
+    <log/><br/>
+    <text path="/message/body/commit/url"/>
+  </format>
+</formatter>
