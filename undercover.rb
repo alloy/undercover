@@ -31,11 +31,11 @@ class Cia
             <project>#{h @data[:repository][:name]}</project>
             <branch>#{h @data[:ref].split('/').last}</branch>
           </source>
-          <timestamp>#{h commit[:timestamp].to_i}</timestamp>
+          <timestamp>#{commit[:timestamp].to_i}</timestamp>
           <body>
             <commit>
-              <author>#{h commit[:author][:name]} (#{h commit[:author][:email]})</author>
-              <revision>#{h sha}</revision>
+              <author>#{h "#{commit[:author][:name]} (#{commit[:author][:email]})"}</author>
+              <revision>#{sha}</revision>
               <log>#{h commit[:message]}</log>
               <url>#{h commit[:url]}</url>
             </commit>
@@ -137,6 +137,40 @@ if __FILE__ == $0
     def test_should_not_break_if_a_xmlrpc_exception_occurs
       XMLRPC::Client.stubs(:new).raises XMLRPC::FaultException.new('foo', 'bar')
       assert_nothing_raised(Exception) { @cia.send_commit_messages! }
+    end
+    
+    def test_should_escape_certain_data_to_not_break_xml_validity
+      cia = Cia.new({
+        :before => "5aef35982fb2d34e9d9d4502f6ede1072793222d",
+        :repository => {
+          :url => "http://github.com/alloy/undercover",
+          :name => "under & cover",
+          :owner => {
+            :email => "e.duran@superalloy.nl",
+            :name => "alloy"
+          }
+        },
+        :commits => {
+          '41a212ee83ca127e3c8cf465891ab7216a705f59' => {
+            :url => "undercover?foo=foo&bar=bar",
+            :author => {
+              :email => "<monsieur@église.fr>",
+              :name => "Mister & Monsieur"
+            },
+            :message => "<strong>weird</strong>",
+            :timestamp => TIMESTAMP
+          }
+        },
+        :after => "de8251ff97ee194a289832576287d6f8ad74e3d0",
+        :ref => "refs/heads/under&cover"
+      })
+      message = cia.commit_messages.first
+      
+      assert message.include?('<project>under &amp; cover</project>')
+      assert message.include?('<author>Mister &amp; Monsieur (&lt;monsieur@église.fr&gt;)</author>')
+      assert message.include?('<log>&lt;strong&gt;weird&lt;/strong&gt;</log>')
+      assert message.include?('<branch>under&amp;cover</branch>')
+      assert message.include?('<url>undercover?foo=foo&amp;bar=bar</url>')
     end
     
     private
