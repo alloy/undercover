@@ -2,6 +2,7 @@
 # You can redistribute it and/or modify it under the Ruby's license or the GPL2.
 
 require 'xmlrpc/client'
+require 'cgi'
 
 class Cia
   SERVER = "cia.vc"
@@ -27,21 +28,27 @@ class Cia
             <version>1.0</version>
           </generator>
           <source>
-            <project>#{@data[:repository][:name]}</project>
-            <branch>#{@data[:ref].split('/').last}</branch>
+            <project>#{h @data[:repository][:name]}</project>
+            <branch>#{h @data[:ref].split('/').last}</branch>
           </source>
-          <timestamp>#{commit[:timestamp].to_i}</timestamp>
+          <timestamp>#{h commit[:timestamp].to_i}</timestamp>
           <body>
             <commit>
-              <author>#{commit[:author][:name]} (#{commit[:author][:email]})</author>
-              <revision>#{sha}</revision>
-              <log>#{commit[:message]}</log>
-              <url>#{commit[:url]}</url>
+              <author>#{h commit[:author][:name]} (#{h commit[:author][:email]})</author>
+              <revision>#{h sha}</revision>
+              <log>#{h commit[:message]}</log>
+              <url>#{h commit[:url]}</url>
             </commit>
           </body>
         </message>
       }
     end
+  end
+
+  private
+
+  def h(input)
+    CGI.escapeHTML(input.to_s)
   end
 end
 
